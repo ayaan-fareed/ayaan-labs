@@ -43,6 +43,14 @@ export class Experience {
   private motionScale: number;
   private measureTimer = 0;
 
+  // Optional ambient typing audio (nav speaker toggle)
+  private audioCtx: AudioContext | null = null;
+  private audioGain: GainNode | null = null;
+  private noiseBuffer: AudioBuffer | null = null;
+  private soundEnabled = false;
+  private clickTimer = 0;
+  private unsubscribeSound: () => void;
+
   constructor(private canvas: HTMLCanvasElement, private options: Options) {
     this.quality = detectQuality(window.innerWidth, options.reducedMotion);
     this.motionScale = options.reducedMotion ? 0.25 : 1;
@@ -103,6 +111,7 @@ export class Experience {
 
     window.addEventListener("pointermove", this.onPointerMove, { passive: true });
     window.addEventListener("resize", this.onResize);
+    this.unsubscribeSound = experienceStore.soundOn.subscribe(this.setSound);
     this.onResize();
     this.measureSections();
     this.applyScroll(window.scrollY, true);
@@ -239,26 +248,41 @@ export class Experience {
     this.character.blendPose(this.poseFrom, this.poseTo, this.poseT);
     const facingCamera = Math.cos(s.characterRotY) > 0.2;
     this.character.setLook(facingCamera ? this.mouse.x * 0.8 : 0, facingCamera ? -this.mouse.y * 0.5 : 0);
-    const typing = this.poseFrom === "sitting" ? 1 - this.poseT : this.poseTo === "sitting" ? this.poseT : 0;
+    const typingHero = this.poseFrom === "sitting" ? 1 - this.poseT : this.poseTo === "sitting" ? this.poseT : 0;
+    const typingContact = this.poseFrom === "crossed" ? 1 - this.poseT : this.poseTo === "crossed" ? this.poseT : 0;
+    const typing = Math.max(typingHero, typingContact);
+
     const edge = s.holo <= 0.001 ? -1000 : s.character.y + lerp(-0.3, 1.7, s.holo);
     this.character.setHoloEdge(edge);
     this.character.setAmbient(s.ambient.x, s.ambient.y, s.ambient.z);
     this.character.setLightDirection(s.lightDir);
     this.character.update(time, dt, this.motionScale, typing);
 
+    // Ambient key clicks ride the character's real strike activity
+    if (this.soundEnabled && this.character.typingActivity > 0.05) {
+      this.clickTimer -= dt;
+      if (this.clickTimer <= 0) {
+        this.playClick();
+        this.clickTimer = 0.055 + Math.random() * 0.11;
+      }
+    } else {
+      this.clickTimer = 0;
+    }
+
     // Ground shadow follows the character
     this.blobShadow.position.set(s.character.x, s.character.y + 0.01, s.character.z + 0.1);
-    const sitting = this.poseFrom === "sitting" || this.poseTo === "sitting";
+    const sitting = this.poseFrom === "sitting" || this.poseTo === "sitting" || this.poseFrom === "crossed" || this.poseTo === "crossed";
     (this.blobShadow.material as THREE.MeshBasicMaterial).opacity = (sitting ? 0.04 : 0.1) * (1 - s.holo);
 
     // Environment
-    this.workspace.update(time, this.motionScale);
+    this.workspace.update(time, dt, this.motionScale, typingHero > 0.1);
     this.platform.set(s.grid, s.platform, s.beam);
     this.platform.update(time, this.motionScale);
     this.particles.set(s.particles);
     this.particles.update(time, this.motionScale);
     this.props.root.position.x = s.propsX;
     this.props.root.visible = s.propsX < 11;
+    this.props.update(dt, typingContact > 0.1);
 
     // Atmosphere
     this.scene.background = tmpColor.copy(s.background);
@@ -278,6 +302,55 @@ export class Experience {
       experienceStore.ready.set(true);
     }
   };
+
+  // ─── Optional typing audio ─────────────────────────────────────────────────
+
+  private setSound = (on: boolean) => {
+    this.soundEnabled = on;
+    if (on && !this.audioCtx) {
+      try {
+        this.audioCtx = new AudioContext();
+        this.audioGain = this.audioCtx.createGain();
+        this.audioGain.gain.value = 0;
+        this.audioGain.connect(this.audioCtx.destination);
+
+        // Short white-noise burst reused as the click source
+        const len = Math.floor(this.audioCtx.sampleRate * 0.05);
+        this.noiseBuffer = this.audioCtx.createBuffer(1, len, this.audioCtx.sampleRate);
+        const data = this.noiseBuffer.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      } catch {
+        this.audioCtx = null;
+        this.audioGain = null;
+      }
+    }
+    if (this.audioCtx && this.audioGain) {
+      if (this.audioCtx.state === "suspended") void this.audioCtx.resume();
+      const t = this.audioCtx.currentTime;
+      this.audioGain.gain.cancelScheduledValues(t);
+      this.audioGain.gain.setTargetAtTime(on ? 0.16 : 0, t, 0.08);
+    }
+  };
+
+  /** One filtered noise "thock" — pitch/volume jitter keeps it from sounding mechanical. */
+  private playClick() {
+    const ctx = this.audioCtx;
+    if (!ctx || !this.audioGain || !this.noiseBuffer || ctx.state !== "running") return;
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuffer;
+    src.playbackRate.value = 0.9 + Math.random() * 0.5;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 1600 + Math.random() * 2400;
+    filter.Q.value = 1.4;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.4 + Math.random() * 0.45, t);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+    src.connect(filter).connect(env).connect(this.audioGain);
+    src.start(t);
+    src.stop(t + 0.06);
+  }
 
   private projectAnchors() {
     if (experienceStore.anchors.size === 0) return;
@@ -317,8 +390,12 @@ export class Experience {
   dispose() {
     this.disposed = true;
     cancelAnimationFrame(this.frame);
+    this.unsubscribeSound();
+    void this.audioCtx?.close().catch(() => {});
     window.removeEventListener("pointermove", this.onPointerMove);
     window.removeEventListener("resize", this.onResize);
+    this.workspace.dispose();
+    this.props.dispose();
     disposeObject(this.scene);
     this.renderer.dispose();
     experienceStore.ready.set(false);

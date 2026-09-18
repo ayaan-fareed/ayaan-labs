@@ -10,7 +10,7 @@ export default function Intro() {
     <section id="intro" className="section intro-section" ref={ref} aria-label="Leaving the office">
       <div className="intro-grid">
         <span className="section-index" data-reveal>
-          02 — Descent
+          — Descent
         </span>
         <p className="display-copy" data-reveal>
           Below the desk there is a second layer — where the interface <em>stops being flat.</em>

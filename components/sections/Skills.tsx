@@ -1,92 +1,91 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { skillGroups } from "@/data/skills";
 import { useSectionReveal } from "@/animations/sections";
-import { gsap } from "@/lib/gsap";
-
-const LAYOUT = [
-  { side: "left", top: 46, depth: 0.9 },
-  { side: "right", top: 20, depth: 1.3 },
-  { side: "left", top: 70, depth: 1.1 },
-  { side: "right", top: 50, depth: 0.7 },
-  { side: "right", top: 76, depth: 1.5 },
-] as const;
+import { scrollToTarget } from "@/lib/experienceStore";
 
 export default function Skills() {
   const ref = useRef<HTMLElement | null>(null);
-  const fieldRef = useRef<HTMLDivElement | null>(null);
-  const [active, setActive] = useState(skillGroups[0].id);
-  useSectionReveal(ref, { start: "top 60%", once: false });
-
-  useEffect(() => {
-    const field = fieldRef.current;
-    if (!field || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const nodes = Array.from(field.querySelectorAll<HTMLElement>("[data-depth]"));
-    const setters = nodes.map((n) => ({
-      depth: Number(n.dataset.depth),
-      x: gsap.quickTo(n, "x", { duration: 0.9, ease: "power3.out" }),
-      y: gsap.quickTo(n, "y", { duration: 0.9, ease: "power3.out" }),
-    }));
-    const onMove = (e: PointerEvent) => {
-      if (e.pointerType === "touch") return;
-      const nx = e.clientX / window.innerWidth - 0.5;
-      const ny = e.clientY / window.innerHeight - 0.5;
-      setters.forEach((s) => {
-        s.x(nx * -26 * s.depth);
-        s.y(ny * -18 * s.depth);
-      });
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
-  }, []);
+  useSectionReveal(ref, { start: "top 65%", once: false });
 
   return (
-    <section id="skills" className="pin-wrap skills-wrap" ref={ref} aria-label="Skills">
-      <div className="pin skills-pin">
-        <div className="skills-heading">
-          <span className="section-index" data-reveal>
-            04 — Stack
+    <section id="skills" className="section skills-section light-theme" ref={ref} aria-label="Skills & Technologies">
+      <div className="skills-container">
+        <div className="skills-header">
+          <span className="section-step-light" data-reveal>
+            03 — SKILLS & TECHNOLOGIES
           </span>
           <h2 data-reveal>
-            Built across
+            Built with
             <br />
-            <em>design + code.</em>
+            modern <span className="highlight-blue">tools.</span>
           </h2>
+          <p className="skills-lede" data-reveal>
+            I work with modern technologies to build fast, scalable and visually appealing web applications.
+          </p>
+          <a
+            className="skills-action-btn"
+            href="#work"
+            data-reveal
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToTarget("#work");
+            }}
+          >
+            <span className="btn-circle-light">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </span>
+            <span>VIEW ALL PROJECTS</span>
+          </a>
         </div>
 
-        <div className="skills-field" ref={fieldRef}>
-          {skillGroups.map((group, i) => {
-            const slot = LAYOUT[i % LAYOUT.length];
-            const isActive = active === group.id;
-            return (
-              <div
-                key={group.id}
-                className={`skill-node skill-node--${slot.side}`}
-                style={{ top: `${slot.top}%` }}
-                data-depth={slot.depth}
-                data-reveal
-                data-active={isActive || undefined}
-              >
-                <button
-                  type="button"
-                  className="skill-node-label"
-                  onPointerEnter={() => setActive(group.id)}
-                  onFocus={() => setActive(group.id)}
-                  onClick={() => setActive(group.id)}
-                  aria-expanded={isActive}
-                  aria-controls={`skills-${group.id}`}
-                >
-                  <i />
-                  {group.label}
-                </button>
-                <ul id={`skills-${group.id}`} className="skill-node-items">
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
+        <div className="skills-grid">
+          {skillGroups.map((group) => (
+            <div key={group.id} className="skill-card-white" data-reveal>
+              <div className="skill-card-header">
+                <div className="skill-icon-wrap" style={{ backgroundColor: `${group.color}15`, color: group.color }}>
+                  {group.id === "frontend" && (
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="16 18 22 12 16 6" />
+                      <polyline points="8 6 2 12 8 18" />
+                    </svg>
+                  )}
+                  {group.id === "3d" && (
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                      <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                  )}
+                  {group.id === "tools" && (
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
+                  )}
+                  {group.id === "backend" && (
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                      <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                      <line x1="6" y1="6" x2="6.01" y2="6" />
+                      <line x1="6" y1="18" x2="6.01" y2="18" />
+                    </svg>
+                  )}
+                </div>
+                <h3>{group.label}</h3>
               </div>
-            );
-          })}
+
+              <ul className="skill-item-list">
+                {group.items.map((item) => (
+                  <li key={item} className="skill-item-row">
+                    <span className="skill-bullet" style={{ backgroundColor: group.color }} />
+                    <span className="skill-text">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
     </section>

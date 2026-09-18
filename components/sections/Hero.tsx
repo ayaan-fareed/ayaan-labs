@@ -26,10 +26,13 @@ export default function Hero() {
   return (
     <section id="top" className="hero" ref={ref} aria-label="Introduction">
       <div className="hero-copy">
+        <span className="hero-greeting" data-reveal>
+          01 — HI, I&apos;M
+        </span>
         <h1 data-reveal>
-          {site.name}
+          {site.firstName}
           <br />
-          <span>Labs</span>
+          <span className="gradient-purple">{site.lastName}</span>
         </h1>
         <span className="role-tag" data-reveal>
           {site.role}
@@ -37,26 +40,25 @@ export default function Hero() {
         <p className="hero-lede" data-reveal>
           {site.tagline}
         </p>
+
+        <a
+          className="hero-scroll-btn"
+          href="#about"
+          aria-label="Scroll to explore"
+          data-reveal
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToTarget("#about");
+          }}
+        >
+          <span className="btn-circle">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+          </span>
+          <span>SCROLL TO EXPLORE</span>
+        </a>
       </div>
-      <div className="hero-meta" data-reveal>
-        <span>01 — Office</span>
-        <span>{site.location}</span>
-      </div>
-      <a
-        className="scroll-cue"
-        href="#intro"
-        aria-label="Scroll to explore"
-        data-reveal
-        onClick={(e) => {
-          e.preventDefault();
-          scrollToTarget("#intro");
-        }}
-      >
-        <span className="scroll-cue-track">
-          <span />
-        </span>
-        <span className="scroll-cue-label">Scroll to explore</span>
-      </a>
     </section>
   );
 }

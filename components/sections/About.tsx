@@ -1,63 +1,84 @@
 "use client";
-import { useMemo, useRef } from "react";
-import { site } from "@/data/site";
-import { headlineSkills } from "@/data/skills";
-import { useAnchor } from "@/hooks/useAnchor";
-import { useScrubReveal } from "@/animations/sections";
+import { useRef } from "react";
+import { floatingSkills } from "@/data/skills";
+import { scrollToTarget } from "@/lib/experienceStore";
+import { useSectionReveal } from "@/animations/sections";
 
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
-  const headRef = useAnchor<HTMLDivElement>("head");
-  const chestRef = useAnchor<HTMLDivElement>("chest");
-  const handRef = useAnchor<HTMLDivElement>("handL");
-  const feetRef = useAnchor<HTMLDivElement>("feet");
-  const thresholds = useMemo(() => [0.12, 0.34, 0.5, 0.2], []);
-  useScrubReveal(ref, thresholds);
+  useSectionReveal(ref, { start: "top 60%", once: false });
+
+  const leftSkills = floatingSkills.slice(0, 3); // React, Next.js, TypeScript
+  const rightSkills = floatingSkills.slice(3, 6); // Tailwind, GSAP, Three.js
 
   return (
-    <section id="about" className="pin-wrap about-wrap" ref={ref} aria-label="About">
-      <div className="pin about-pin">
-        <span className="section-index section-index--floating">03 — Profile</span>
+    <section id="about" className="section about-section" ref={ref} aria-label="About Ayaan">
+      <div className="section-meta-bar" data-reveal>
+        <span className="section-step">02 — ABOUT ME</span>
+        <div className="section-counter">
+          <span>02 / 06</span>
+          <span className="counter-line" />
+        </div>
+      </div>
 
-        <div className="anchor anchor--left" ref={headRef} data-scrub>
-          <i className="anchor-dot" />
-          <i className="anchor-line" />
-          <div className="holo-card">
-            <strong>{site.name}</strong>
-            <span>
-              <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-                <path d="M6 1a3.6 3.6 0 0 1 3.6 3.6C9.6 7.3 6 11 6 11S2.4 7.3 2.4 4.6A3.6 3.6 0 0 1 6 1Z" fill="none" stroke="currentColor" strokeWidth="1.1" />
-                <circle cx="6" cy="4.6" r="1.1" fill="currentColor" />
+      <div className="about-grid">
+        <div className="about-copy">
+          <h2 data-reveal>
+            Below the desk
+            <br />
+            there is a second layer —
+            <br />
+            <span className="gradient-cyan">where the interface stops being flat.</span>
+          </h2>
+
+          <p className="about-bio" data-reveal>
+            I&apos;m Ayaan, a frontend developer who loves turning ideas into interactive, responsive, and visually polished web experiences.
+          </p>
+
+          <a
+            className="about-scroll-btn"
+            href="#skills"
+            data-reveal
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToTarget("#skills");
+            }}
+          >
+            <span className="btn-circle">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M19 12l-7 7-7-7" />
               </svg>
-              {site.location}
             </span>
-          </div>
+            <span>SCROLL DOWN</span>
+          </a>
         </div>
 
-        <div className="anchor anchor--right" ref={chestRef} data-scrub>
-          <i className="anchor-dot" />
-          <i className="anchor-line" />
-          <div className="holo-card holo-card--list">
-            <strong>Skills</strong>
-            <ul>
-              {headlineSkills.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ul>
+        {/* 3D Floating Technology Badges surrounding Ayaan */}
+        <div className="floating-badges-wrap" aria-hidden="true">
+          <div className="floating-col floating-col--left">
+            {leftSkills.map((skill, i) => (
+              <div
+                key={skill}
+                className="tech-badge tech-badge--left"
+                style={{ animationDelay: `${i * 0.4}s` }}
+                data-reveal
+              >
+                <span>{skill}</span>
+              </div>
+            ))}
           </div>
-        </div>
 
-        <div className="anchor anchor--left anchor--wide" ref={handRef} data-scrub>
-          <i className="anchor-dot" />
-          <i className="anchor-line" />
-          <div className="holo-card">
-            <p>{site.tagline}</p>
-          </div>
-        </div>
-
-        <div className="anchor anchor--below" ref={feetRef} data-scrub>
-          <div className="holo-counter" aria-hidden="true">
-            <span>AL — 01</span>
+          <div className="floating-col floating-col--right">
+            {rightSkills.map((skill, i) => (
+              <div
+                key={skill}
+                className="tech-badge tech-badge--right"
+                style={{ animationDelay: `${0.6 + i * 0.4}s` }}
+                data-reveal
+              >
+                <span>{skill}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

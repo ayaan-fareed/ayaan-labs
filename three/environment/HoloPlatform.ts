@@ -63,12 +63,48 @@ export class HoloPlatform {
     top.rotation.x = -Math.PI / 2;
     top.position.y = 0.225;
     this.disc.add(top);
-    const ringMat = new THREE.MeshBasicMaterial({ color: "#9be6ff", transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-    this.ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.015, 8, 96), ringMat);
+    // Multiple concentric glowing neon rings
+    const ringMat = new THREE.MeshBasicMaterial({ color: "#38bdf8", transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.ring = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.02, 8, 96), ringMat);
     this.ring.rotation.x = Math.PI / 2;
     this.ring.position.y = 0.24;
     this.disc.add(this.ring);
-    this.discMats.push(baseMat, topMat, ringMat);
+
+    const outerRingMat = new THREE.MeshBasicMaterial({ color: "#2563eb", transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const outerRing = new THREE.Mesh(new THREE.TorusGeometry(1.85, 0.015, 8, 96), outerRingMat);
+    outerRing.rotation.x = Math.PI / 2;
+    outerRing.position.y = 0.12;
+    this.disc.add(outerRing);
+
+    const innerRingMat = new THREE.MeshBasicMaterial({ color: "#67e8f9", transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.012, 8, 96), innerRingMat);
+    innerRing.rotation.x = Math.PI / 2;
+    innerRing.position.y = 0.235;
+    this.disc.add(innerRing);
+
+    this.discMats.push(baseMat, topMat, ringMat, outerRingMat, innerRingMat);
+
+    // Floating faceted space rocks / asteroids flanking Ayaan (matching reference image)
+    const rockGeo = new THREE.DodecahedronGeometry(0.55, 1);
+    const rockMat = new THREE.MeshStandardMaterial({ color: "#172554", roughness: 0.8, metalness: 0.2, flatShading: true });
+
+    const rockL = new THREE.Mesh(rockGeo, rockMat);
+    rockL.position.set(-2.8, 1.8, -1.2);
+    rockL.scale.set(1.1, 1.4, 0.9);
+    this.root.add(rockL);
+
+    const rockR = new THREE.Mesh(rockGeo, rockMat);
+    rockR.position.set(2.8, 2.2, -1.0);
+    rockR.scale.set(1.2, 1.5, 1.1);
+    this.root.add(rockR);
+
+    // Floating small glowing sphere
+    const glowSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 24, 24),
+      new THREE.MeshStandardMaterial({ color: "#60a5fa", emissive: new THREE.Color("#2563eb"), emissiveIntensity: 1.2 })
+    );
+    glowSphere.position.set(1.4, 3.2, 0.2);
+    this.root.add(glowSphere);
 
     this.coneMat = new THREE.MeshBasicMaterial({
       color: HOLO_COLOR,

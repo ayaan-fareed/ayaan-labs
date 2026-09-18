@@ -28,6 +28,7 @@ export const experienceStore = {
   loaderDone: new Signal(false),
   activeSection: new Signal<SectionId>("top"),
   theme: new Signal<Theme>("light"),
+  soundOn: new Signal(false),
   anchors: new Map<string, HTMLElement>(),
 };
 
